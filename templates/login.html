@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión</title>
+    <title>ZBank Iniciar Sesión</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -107,9 +107,13 @@
         {% endwith %}
         <!-- Fin del área de mensajes -->
 
+
         <div class="register-link">
             <p>¿No tienes una cuenta?</p>
             <a href="{{ url_for('auth.registro') }}"><button>Crear cuenta</button></a>
+        </div>
+        <div class="register-link">
+            <p>¿Olvidaste tu contraseña? <a href="{{ url_for('auth.recuperar_contrasena') }}">Recupérala aquí</a></p>
         </div>
     </div>
 </body>

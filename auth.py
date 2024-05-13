@@ -62,3 +62,25 @@ def login():
             return redirect(url_for('auth.login'))
 
     return render_template('login.html')
+
+
+from werkzeug.security import generate_password_hash
+
+@auth_bp.route('/recuperar-contrasena', methods=['GET', 'POST'])
+def recuperar_contrasena():
+    if request.method == 'POST':
+        numero_documento = request.form['numero_documento']
+        correo = request.form['correo']
+        nueva_contraseña = request.form['nueva_contraseña']
+
+        usuario = User.query.filter_by(numero_documento=numero_documento, correo=correo).first()
+
+        if usuario:
+            # Actualizar la contraseña del usuario en la base de datos
+            usuario.password = generate_password_hash(nueva_contraseña)
+            db.session.commit()
+            flash('Se ha restablecido la contraseña con éxito.', 'success')
+        else:
+            flash('No se encontró ningún usuario con las credenciales proporcionadas.', 'error')
+
+    return render_template('recuperar_contrasena.html')

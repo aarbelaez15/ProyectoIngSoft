@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Registro Financiero</title>
+    <title>Registro Financiero</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <style>
         body {
@@ -52,7 +52,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-bottom: 10px; /* Espacio entre el botón de agregar registro y el botón de generar PDF */
+            margin-bottom: 30px; /* Espacio entre el botón de agregar registro y el botón de generar PDF */
         }
 
         button:hover {
@@ -73,7 +73,8 @@
         <h1>Agregar Registro Financiero</h1>
         <div>
             {% if current_user.is_authenticated %}
-                <p>Bienvenido {{ current_user.nombre }} {{ current_user.apellido }}, divisa: {{ current_user.divisa }}</p>
+                <p>Bienvenido, {{ current_user.nombre }} {{ current_user.apellido }}</p>
+                <p>Divisa: {{ current_user.divisa }}</p>
                 <a href="/login" class="btn btn-danger">Cerrar Sesión</a>
             {% else %}
                 <p>No estás autenticado.</p>

@@ -28,10 +28,11 @@ app.register_blueprint(auth_bp)
 def index():
     with app.app_context():
         total = db.session.query(func.sum(Registro.monto)).scalar() or 0.0
-        registros = Registro.query.filter_by(user_id=current_user.id).order_by(desc(Registro.fecha)).all()
+        registros = []
+        if current_user.is_authenticated:  # Verifica si el usuario está autenticado
+            registros = Registro.query.filter_by(user_id=current_user.id).order_by(desc(Registro.fecha)).all()
 
     return render_template('registro.html', registros=registros, total=total)
-
 
 @app.route('/generar_informe_pdf', methods=['GET'])
 def generar_informe_pdf():
@@ -51,16 +52,11 @@ def generar_pdf(registros):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
-
-    # Definir los encabezados de la tabla
     encabezados = ["Fecha", "Monto", "Descripción", "Tipo"]
     data = [encabezados]
-
-    # Agregar cada registro como una fila en la tabla
     for registro in registros:
         data.append([registro.fecha.strftime('%Y-%m-%d'), registro.monto, registro.descripcion, registro.tipo])
 
-    # Crear la tabla y aplicar estilos
     tabla = Table(data)
     tabla.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -70,10 +66,8 @@ def generar_pdf(registros):
                                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                                ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
 
-    # Agregar la tabla al documento
     elements.append(tabla)
 
-    # Construir el PDF
     doc.build(elements)
 
     buffer.seek(0)
@@ -91,10 +85,7 @@ def agregar():
             fecha = datetime.strptime(request.form['fecha'], '%Y-%m-%d')
             descripcion = request.form['descripcion']
             tipo = request.form['tipo']
-
-            # Obtener el usuario actualmente autenticado
             usuario_actual = current_user
-
             nuevo_registro = Registro(monto=monto, fecha=fecha, descripcion=descripcion, tipo=tipo, user_id=usuario_actual.id)
             db.session.add(nuevo_registro)
             db.session.commit()
@@ -102,7 +93,6 @@ def agregar():
             return redirect(url_for('agregar'))
 
     return render_template('agregar.html', total=total)
-
 
 if __name__ == '__main__':
     with app.app_context():
