@@ -52,7 +52,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-bottom: 30px; /* Espacio entre el botón de agregar registro y el botón de generar PDF */
+            margin-bottom: 30px;
         }
 
         button:hover {
@@ -103,7 +103,6 @@
             <button type="submit" class="btn btn-primary">Agregar</button>
         </form>
 
-        <!-- Botón para generar PDF -->
         <form action="{{ url_for('generar_informe_pdf') }}" method="get" target="_blank">
             <button type="submit" class="btn btn-secondary">Generar PDF</button>
         </form>

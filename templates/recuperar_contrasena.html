@@ -57,6 +57,57 @@
             background-color: #0056b3;
         }
 
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .progress {
+            height: 20px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: red;
+            width: 0;
+            transition: width 0.3s;
+        }
+
+        .progress-bar.success {
+            background-color: green;
+        }
+
+        .password-requirements {
+            margin-bottom: 15px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .password-requirements li {
+            color: red;
+        }
+
+        .password-requirements li.valid {
+            color: green;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +120,17 @@
             <input type="email" id="correo" name="correo" required>
             <label for="nueva_contraseña">Nueva Contraseña:</label>
             <input type="password" id="nueva_contraseña" name="nueva_contraseña" required>
+            <div class="progress">
+                <div class="progress-bar" id="password-progress"></div>
+            </div>
+            <ul class="password-requirements" id="password-requirements">
+                <li id="length" class="invalid">Al menos 8 caracteres</li>
+                <li id="uppercase" class="invalid">Una letra mayúscula</li>
+                <li id="number" class="invalid">Un número</li>
+                <li id="special" class="invalid">Un carácter especial (@ $ ! % * ? & , . )</li>
+            </ul>
+            <label for="nueva_contraseña2">Confirma Nueva Contraseña:</label>
+            <input type="password" id="nueva_contraseña2" name="nueva_contraseña2" required>
             <button type="submit">Cambiar contraseña</button>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -82,5 +144,51 @@
         </form>
         <p><a href="{{ url_for('auth.login') }}">Inicia sesión aquí</a></p>
     </div>
+
+    <script>
+        const passwordInput = document.getElementById('nueva_contraseña');
+        const progressBar = document.getElementById('password-progress');
+        const requirementsList = document.getElementById('password-requirements');
+
+        const requirements = {
+            length: {
+                regex: /.{8,}/,
+                element: document.getElementById('length')
+            },
+            uppercase: {
+                regex: /[A-Z]/,
+                element: document.getElementById('uppercase')
+            },
+            number: {
+                regex: /[0-9]/,
+                element: document.getElementById('number')
+            },
+            special: {
+                regex: /[@$!%*?&.,]/,
+                element: document.getElementById('special')
+            }
+        };
+
+        passwordInput.addEventListener('input', () => {
+            let validCount = 0;
+            for (let key in requirements) {
+                if (requirements[key].regex.test(passwordInput.value)) {
+                    requirements[key].element.classList.remove('invalid');
+                    requirements[key].element.classList.add('valid');
+                    validCount++;
+                } else {
+                    requirements[key].element.classList.remove('valid');
+                    requirements[key].element.classList.add('invalid');
+                }
+            }
+            const progressPercentage = (validCount / Object.keys(requirements).length) * 100;
+            progressBar.style.width = progressPercentage + '%';
+            if (progressPercentage === 100) {
+                progressBar.classList.add('success');
+            } else {
+                progressBar.classList.remove('success');
+            }
+        });
+    </script>
 </body>
 </html>

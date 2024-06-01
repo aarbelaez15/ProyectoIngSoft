@@ -8,7 +8,7 @@ from models import db, Registro, User
 
 
 app = Flask(__name__)
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'  # Esta es una clave secreta de ejemplo, debes usar una diferente y segura en tu aplicación
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 app.config.from_pyfile('config.py')
 db.init_app(app)
 
@@ -20,19 +20,23 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
 app.register_blueprint(auth_bp)
 
 
+
+from flask_login import current_user, login_required
+
 @app.route('/')
+
 def index():
     with app.app_context():
         total = db.session.query(func.sum(Registro.monto)).scalar() or 0.0
-        registros = []
-        if current_user.is_authenticated:  # Verifica si el usuario está autenticado
+        if current_user.is_authenticated:
             registros = Registro.query.filter_by(user_id=current_user.id).order_by(desc(Registro.fecha)).all()
-
+        else:
+            registros = []
     return render_template('registro.html', registros=registros, total=total)
+
 
 @app.route('/generar_informe_pdf', methods=['GET'])
 def generar_informe_pdf():
@@ -52,8 +56,10 @@ def generar_pdf(registros):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
+
     encabezados = ["Fecha", "Monto", "Descripción", "Tipo"]
     data = [encabezados]
+
     for registro in registros:
         data.append([registro.fecha.strftime('%Y-%m-%d'), registro.monto, registro.descripcion, registro.tipo])
 
@@ -85,7 +91,9 @@ def agregar():
             fecha = datetime.strptime(request.form['fecha'], '%Y-%m-%d')
             descripcion = request.form['descripcion']
             tipo = request.form['tipo']
+
             usuario_actual = current_user
+
             nuevo_registro = Registro(monto=monto, fecha=fecha, descripcion=descripcion, tipo=tipo, user_id=usuario_actual.id)
             db.session.add(nuevo_registro)
             db.session.commit()
@@ -93,6 +101,7 @@ def agregar():
             return redirect(url_for('agregar'))
 
     return render_template('agregar.html', total=total)
+
 
 if __name__ == '__main__':
     with app.app_context():

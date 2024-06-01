@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
-from models import db, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user
-
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from models import db, User
+import re
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates/auth')
 
@@ -17,21 +17,27 @@ def registro():
         divisa = request.form['divisa']
         nombre_usuario = request.form['nombre_usuario']
         password = request.form['password']
+        password2 = request.form['password2']
 
-        if User.query.filter_by(correo=correo).first() or User.query.filter_by(nombre_usuario=nombre_usuario).first():
-            flash('El usuario ya existe', 'error')
+        if password != password2:
+            flash('Las contraseñas no coinciden', 'error')
+            return redirect(url_for('auth.registro'))
+
+        if not validar_contrasena(password):
+            flash('La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial.', 'error')
             return redirect(url_for('auth.registro'))
 
         if User.query.filter_by(correo=correo).first() or User.query.filter_by(nombre_usuario=nombre_usuario).first():
             flash('El correo electrónico o el nombre de usuario ya están en uso', 'error')
             return redirect(url_for('auth.registro'))
 
-        # Especificamos el método de hash de manera explícita
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
-        nuevo_usuario = User(nombre=nombre, apellido=apellido, tipo_documento=tipo_documento,
-                             numero_documento=numero_documento, correo=correo, divisa=divisa,
-                             nombre_usuario=nombre_usuario, password=hashed_password)
+        nuevo_usuario = User(
+            nombre=nombre, apellido=apellido, tipo_documento=tipo_documento,
+            numero_documento=numero_documento, correo=correo, divisa=divisa,
+            nombre_usuario=nombre_usuario, password=hashed_password
+        )
 
         db.session.add(nuevo_usuario)
         db.session.commit()
@@ -40,6 +46,17 @@ def registro():
         return redirect(url_for('auth.login'))
 
     return render_template('registro.html')
+
+def validar_contrasena(password):
+    if len(password) < 8:
+        return False
+    if not re.search(r'[A-Z]', password):
+        return False
+    if not re.search(r'[0-9]', password):
+        return False
+    if not re.search(r'[@$!%*?&.,]', password):
+        return False
+    return True
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -52,19 +69,16 @@ def login():
         if usuario:
             if check_password_hash(usuario.password, password):
                 flash('Inicio de sesión exitoso', 'success')
-                login_user(usuario)  # Iniciar sesión del usuario
-                return redirect(url_for('agregar'))  # Redirige al usuario a la página deseada después del inicio de sesión
+                login_user(usuario)
+                return redirect(url_for('agregar'))
             else:
-                flash('Contraseña incorrecta', 'error')
+                flash('Datos incorrectos', 'error')
                 return redirect(url_for('auth.login'))
         else:
-            flash('El usuario no existe', 'error')
+            flash('Datos incorrectos', 'error')
             return redirect(url_for('auth.login'))
 
     return render_template('login.html')
-
-
-from werkzeug.security import generate_password_hash
 
 @auth_bp.route('/recuperar-contrasena', methods=['GET', 'POST'])
 def recuperar_contrasena():
@@ -72,15 +86,25 @@ def recuperar_contrasena():
         numero_documento = request.form['numero_documento']
         correo = request.form['correo']
         nueva_contraseña = request.form['nueva_contraseña']
+        nueva_contraseña2 = request.form['nueva_contraseña2']
+
+        if nueva_contraseña != nueva_contraseña2:
+            flash('Las contraseñas no coinciden', 'error')
+            return redirect(url_for('auth.recuperar_contrasena'))
+
+        if not validar_contrasena(nueva_contraseña):
+            flash('La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial.', 'error')
+            return redirect(url_for('auth.recuperar_contrasena'))
 
         usuario = User.query.filter_by(numero_documento=numero_documento, correo=correo).first()
 
         if usuario:
-            # Actualizar la contraseña del usuario en la base de datos
             usuario.password = generate_password_hash(nueva_contraseña)
             db.session.commit()
             flash('Se ha restablecido la contraseña con éxito.', 'success')
+            return redirect(url_for('auth.login'))
         else:
             flash('No se encontró ningún usuario con las credenciales proporcionadas.', 'error')
 
     return render_template('recuperar_contrasena.html')
+
